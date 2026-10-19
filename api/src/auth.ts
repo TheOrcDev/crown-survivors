@@ -3,6 +3,17 @@ import { bearer } from "better-auth/plugins";
 import { pool } from "./db.js";
 import { ALLOWED_ORIGINS } from "./origins.js";
 
+/** X profile -> our user fields. Exported for tests. */
+export function mapXProfile(profile: { data: { name?: string; username?: string; profile_image_url?: string } }) {
+  const handle = profile.data.username?.replace(/^@/, "").trim() || undefined;
+  return {
+    name: profile.data.name?.trim() || handle || "Player",
+    handle,
+    // X returns a 48px "_normal" avatar; ask for the 400px version.
+    image: profile.data.profile_image_url?.replace("_normal.", "_400x400."),
+  };
+}
+
 const isLocalHttp = (process.env.BETTER_AUTH_URL ?? "").startsWith("http://");
 
 export const auth = betterAuth({
@@ -13,7 +24,10 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       // X @handle (without the @). Avatar lives in the standard `image` column.
-      handle: { type: "string", required: false, input: false },
+      // NOTE: no `input: false` here. Better Auth strips `input: false` fields from
+      // mapProfileToUser output too, which silently left handle NULL. Client writes are
+      // blocked instead by rejecting /api/auth/update-user in app.ts.
+      handle: { type: "string", required: false },
     },
   },
   socialProviders: {
@@ -25,12 +39,7 @@ export const auth = betterAuth({
       // Re-sync name/handle/avatar from X on every sign-in (people rename themselves).
       overrideUserInfoOnSignIn: true,
       scope: ["users.read", "tweet.read"],
-      mapProfileToUser: (profile) => ({
-        name: profile.data.name,
-        handle: profile.data.username,
-        // X returns a 48px "_normal" avatar; ask for the 400px version.
-        image: profile.data.profile_image_url?.replace("_normal.", "_400x400."),
-      }),
+      mapProfileToUser: mapXProfile,
     },
   },
   session: {

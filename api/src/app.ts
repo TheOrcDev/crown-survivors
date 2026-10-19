@@ -21,6 +21,8 @@ app.use(
 );
 
 // Better Auth routes: /api/auth/sign-in/social, /api/auth/callback/twitter, /api/auth/get-session, /api/auth/sign-out ...
+// Users must not edit name/handle/avatar themselves; they always come from X.
+app.all("/api/auth/update-user", (c) => c.json({ error: "not allowed" }, 403));
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 // Resolve the session (cookie or Bearer token) for everything else.
