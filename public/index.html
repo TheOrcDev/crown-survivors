@@ -1,4 +1,6 @@
 <!DOCTYPE html><html lang="en" data-game="Crown Survivors Classic"><head><meta charset="utf-8">
+<script src="https://cdn.databuddy.cc/databuddy.js" data-client-id="49a0145c-a8bc-4769-9d48-cfbb2d060aba" data-track-interactions="false" crossorigin="anonymous" async></script>
+<script>function dbTrack(n,p){try{window.db?.track(n,p)}catch(e){}}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Crown Survivors">
@@ -76,7 +78,7 @@ function startRun(){au();if(window.flightTrackGameStarted)flightTrackGameStarted
  G={t:0,p:{x:0,y:0,hp:mhp,mhp,inv:0,face:1,vx:0,vy:0,walk:0},en:[],pr:[],pools:[],eb:[],gems:[],fx:[],dn:[],bolts:[],lvl:1,xp:0,kills:0,gold:0,
   w:{},ps:{},evo:{},cd:{},choice:null,queue:0,spawnAcc:0,phase:0,bossI:0,boss:null,eliteT:45,paused:false,over:null,rerolls:M.reroll,revive:M.revive,
   tut:!S.tut?{step:0,t:0}:null,flash:0,gemChain:0,gemT:0,orbA:0,auto:false,god:false,curse:S.curse,auraT:0,char:S.char,dmgDealt:0,tele:[]};
- G.w[c.w]=1;S.runs++;save();mstep=0}
+ G.w[c.w]=1;S.runs++;save();mstep=0;dbTrack('run_start',{hero:CH[S.char].n.toLowerCase().replace(/ /g,'-'),curse:S.curse|0})}
 // ===== stats =====
 const st=()=>{const ps=G.ps,c=G.char;return{dmg:(1+.12*(ps.might||0)+.05*M.might)*(1+infV('dmg')),cd:Math.pow(.92,ps.tome||0)*Math.max(.5,1-infV('cd')),mag:(72)*(1+.35*(ps.magnet||0)+.15*M.magnet+infV('mag')),area:(1+.12*(ps.area||0)+infV('area'))*(c===2?1.2:1),
  armor:(ps.armor||0)+M.armor+(c===1?1:0)+Math.floor(infV('armor')),spd:110*CH[c].spd*(1+.08*(ps.boots||0)+.04*M.speed+infV('spd')),crit:Math.min(.75,.05*(ps.luck||0)+(c===3?.15:0)+.03+infV('crit')),greed:1+.15*M.greed+.1*(ps.luck||0)+.25*G.curse,xpm:c===0?1.1:1}};
@@ -142,7 +144,7 @@ function killEnemy(e){e.dead=1;G.kills++;sfx.kill();fx(e.x,e.y,e.boss?60:e.elite
   G.tele=[];if(e.bi===2){G.slotW=5;G.slotP=5;setTimeout(()=>{if(G&&!G.over)banner('CROWN OF THE WILDS! +2 SLOTS','#7dff6a')},2600)}if(e.bi===LASTB){setTimeout(()=>endRun(true),1800);G.won=true;G.en.forEach(o=>{if(!o.boss)o.dead=1})}else{G.gems.push({x:e.x,y:e.y,v:0,k:'chest'});G.eb=[];G.phase=e.bi+1;banner(['THE NIGHT FALLS...','THE GROUND BURNS...','THE JUNGLE AWAKENS...','YOU ASCEND TO THE CLOUDS...'][e.bi],'#fff3c4');if(e.bi>=2){G.p.hp=Math.min(G.p.mhp,G.p.hp+G.p.mhp*.25)}}}}
 function hurtPlayer(d){const p=G.p;if(p.inv>0||G.god||G.won)return;d=Math.max(1,d-SC.armor);p.hp-=d;p.inv=.6;G.flash=.35;shake=Math.max(shake,6);sfx.hurt();vib(30);dnum(p.x,p.y-20,d,false);
  if(p.hp<=0){if(G.revive>0){G.revive--;p.hp=p.mhp*.5;p.inv=2;banner('REVIVED!','#9fd3ff');G.en.forEach(e=>{if(!e.boss&&d2(e,p)<160*160)killEnemy(e)});ringFx(p.x,p.y,'#9fd3ff',160)}else{p.hp=0;endRun(false)}}}
-function endRun(win){if(G.over)return;const gold=Math.round(G.gold+G.kills/30+(win?220*(1+G.curse*.5):0)+(G.bb>=3&&!win?60:0));G.over={win,gold,t:0};S.gold+=gold;S.kills+=G.kills;S.best=Math.max(S.best,Math.floor(G.t));
+function endRun(win){if(G.over)return;const gold=Math.round(G.gold+G.kills/30+(win?220*(1+G.curse*.5):0)+(G.bb>=3&&!win?60:0));G.over={win,gold,t:0};dbTrack('run_end',{result:win?'win':'death',time_s:Math.floor(G.t),kills:G.kills|0,bosses:G.bb|0,curse:G.curse|0});S.gold+=gold;S.kills+=G.kills;S.best=Math.max(S.best,Math.floor(G.t));
  if(win){S.wins++;S.winsBy[S.char]=(S.winsBy[S.char]||0)+1;if(S.curse>=S.maxCurse&&S.maxCurse<5){S.maxCurse=S.curse+1;G.over.newCurse=S.maxCurse}sfx.win();vib([50,50,50,50,200])}else{sfx.die();vib([100,50,200])}
  S.tut=true;save()}
 // ===== weapons =====
@@ -432,7 +434,7 @@ function drawChars(){menuBg();const {px,pw}=panel(.05,.9);pix('CHOOSE HERO',W/2,
   rr(px+14*U,y,pw-28*U,ch,10*U,sel?'#ffe58a':'#e9d3a0',sel?'#c8452f':pal.ink,sel?4:2);x.save();x.translate(px+46*U,y+ch/2+4*U);x.scale(U*1.8,U*1.8);heroS(0,0,i,1,sel?clock*8:0,1,false);x.restore();
   txt(c.n,px+80*U,y+ch*.25,15,pal.ink,'left',false);txt(c.d,px+80*U,y+ch*.5,10,'#5a4030','left',false);txt('HP '+c.hp+' · '+c.perk+(S.winsBy[i]?' · ♛'+S.winsBy[i]:''),px+80*U,y+ch*.74,10,'#8b6a3a','left',false);
   if(!own){x.fillStyle='rgba(40,25,10,.55)';rr(px+14*U,y,pw-28*U,ch,10*U,'rgba(40,25,10,.55)');txt('🔒 '+c.p+' gold',px+pw/2,y+ch/2,16,S.gold>=c.p?pal.gold:pal.paper)}
-  btns.push({x:px+14*U,y,w:pw-28*U,h:ch,k:'ch'+i,f:()=>{if(own){S.char=i;save()}else if(S.gold>=c.p){S.gold-=c.p;S.chars.push(i);S.char=i;save();sfx.buy();vib(30);for(let j=0;j<30;j++)uiParts.push({x:W/2,y:y+ch/2,vx:rnd(-200,200),vy:rnd(-250,-50),l:1,c:['#ffd23f','#c8452f','#5fae7a'][j%3]})}else toast={t:'Need '+(c.p-S.gold)+' more gold',l:1.2}}})});
+  btns.push({x:px+14*U,y,w:pw-28*U,h:ch,k:'ch'+i,f:()=>{if(own){S.char=i;save()}else if(S.gold>=c.p){S.gold-=c.p;S.chars.push(i);S.char=i;save();dbTrack('hero_unlock',{hero:HERO_ID[i]});sfx.buy();vib(30);for(let j=0;j<30;j++)uiParts.push({x:W/2,y:y+ch/2,vx:rnd(-200,200),vy:rnd(-250,-50),l:1,c:['#ffd23f','#c8452f','#5fae7a'][j%3]})}else toast={t:'Need '+(c.p-S.gold)+' more gold',l:1.2}}})});
  const cy=H*.95-128*U;if(S.maxCurse>0){txt('Curse:',px+24*U,cy+16*U,13,pal.ink,'left',false);for(let i=0;i<=S.maxCurse;i++)button(''+i,px+84*U+i*34*U,cy,30*U,32*U,()=>{S.curse=i;save()},S.curse===i?'#6a5acd':'#a8875a',13)}
  else txt('Win a run to unlock CURSE levels',W/2,cy+16*U,11,'#8b6a3a','center',false);
  button('▶ START RUN',W/2-105*U,H*.95-88*U,210*U,50*U,()=>go('play',startRun),'#c8452f',20);button('BACK',W/2-55*U,H*.95-32*U,110*U,28*U,()=>go('title'),'#8b5a2b',13)}
@@ -464,16 +466,16 @@ function avatar(cx,cy,r,url){x.beginPath();x.arc(cx,cy,r+2*U,0,7);x.fillStyle=LI
 function fitTxt(s,maxW,sz){x.font='bold '+Math.round(sz*U)+'px "Courier New",Courier,monospace';if(x.measureText(s).width<=maxW)return s;while(s.length>2&&x.measureText(s+'…').width>maxW)s=s.slice(0,-1);return s+'…'}
 async function lbRefreshMe(){const r=await api('/me');if(r&&r.ok){if(r.j&&r.j.user){LBS.user=r.j.user}else{LBS.tok=null;LBS.user=null}lbSave()}}
 async function lbSignOut(){api('/api/auth/sign-out',{method:'POST',body:'{}'});LBS.tok=null;LBS.user=null;lb.me={};lbSave();toast={t:'Signed out',l:1.4}}
-function lbSignIn(sc){if(!navigator.onLine){toast={t:"You're offline",l:1.6};return}if(sc){LBS.pend=sc;lbSave()}location.href='/auth/x?returnTo='+encodeURIComponent(location.origin+location.pathname)}
+function lbSignIn(sc){if(!navigator.onLine){toast={t:"You're offline",l:1.6};return}if(sc){LBS.pend=sc;lbSave()}try{sessionStorage.setItem('cs_sx','1')}catch(e){}location.href='/auth/x?returnTo='+encodeURIComponent(location.origin+location.pathname)}
 async function lbLoad(b){lb.data[b]={st:'load'};const r=await api('/leaderboard?board='+b+'&limit=50');lb.data[b]=r&&r.ok&&r.j?{st:'ok',rows:r.j.rows||[]}:{st:'err'};if(lb.board===b){lb.t0=clock;if(lb.want!=null){lb.scroll=lb.want;lb.want=null}}
  if(lbIn()){const m=await api('/me/rank?board='+b);if(m&&m.ok&&m.j){lb.me[b]=m.j;if(m.j.rank){LBS.ranks[b]=m.j.rank;lbSave()}}}}
-function openLB(back,b){lb.back=back;lb.board=b||lb.board;lb.scroll=0;lb.t0=clock;lb.rank=null;lbLoad(lb.board);go('lb')}
+function openLB(back,b){dbTrack('leaderboard_open',{});lb.back=back;lb.board=b||lb.board;lb.scroll=0;lb.t0=clock;lb.rank=null;lbLoad(lb.board);go('lb')}
 function lbTab(b){if(lb.board===b)return;lb.board=b;lb.scroll=0;lb.t0=clock;if(!lb.data[b]||lb.data[b].st!=='ok')lbLoad(b)}
 // best-tracking: which board (if any) did this run improve?
 function lbBetter(sc){const B=LBS.best;if(sc.won&&(!B.f||sc.curse>B.f[0]||(sc.curse===B.f[0]&&sc.time_s<B.f[1])))return'fastest';if(sc.time_s>(B.s||0))return'survival';if(sc.kills>(B.k||0))return'kills';return null}
 function lbRecord(sc){const B=LBS.best;if(sc.won&&(!B.f||sc.curse>B.f[0]||(sc.curse===B.f[0]&&sc.time_s<B.f[1])))B.f=[sc.curse,sc.time_s];B.s=Math.max(B.s||0,sc.time_s);B.k=Math.max(B.k||0,sc.kills);lbSave()}
 async function lbSubmit(sc,b){const old=b?await api('/me/rank?board='+b):null;const r=await api('/scores',{method:'POST',body:JSON.stringify({hero:sc.hero,curse:sc.curse,won:sc.won,time_s:sc.time_s,kills:sc.kills,bosses:sc.bosses})});
- if(!r||!r.ok||!b)return null;const nw=await api('/me/rank?board='+b);if(!nw||!nw.ok||!nw.j||!nw.j.rank)return null;LBS.ranks[b]=nw.j.rank;lbSave();
+ if(r&&r.ok)dbTrack('score_submit',{board:b||'none'});if(!r||!r.ok||!b)return null;const nw=await api('/me/rank?board='+b);if(!nw||!nw.ok||!nw.j||!nw.j.rank)return null;LBS.ranks[b]=nw.j.rank;lbSave();
  const from=old&&old.ok&&old.j?old.j.rank:null;return{board:b,n:nw.j.rank,from,row:nw.j.row}}
 function lbShowRank(res){lb.data={};lb.me={};lb.board=res.board;lbLoad(res.board);lb.back='title';lb.scroll=0;lb.want=Math.max(0,res.n-5)*RH;lb.t0=clock;
  lb.rank=(res.from==null||res.n<res.from)?{n:res.n,from:res.from,row:res.row,t0:clock+.5,burst:0}:null;if(scene!=='lb')go('lb')}
@@ -577,17 +579,9 @@ cv.addEventListener('pointerdown',e=>{if(scene==='lb'&&!lb.rank&&!trans&&!(btns.
 addEventListener('pointermove',e=>{if(lb.drag)lb.scroll=lb.drag.s-(e.clientY-lb.drag.y)/lbT.k});addEventListener('pointerup',()=>{lb.drag=null});addEventListener('pointercancel',()=>{lb.drag=null});
 cv.addEventListener('wheel',e=>{if(scene==='lb'){lb.scroll+=e.deltaY/lbT.k;e.preventDefault()}},{passive:false});
 if(LB_API){const m=location.hash.match(/lb_token=([^&]+)/),er=/lb_error=/.test(location.hash);if(m||er){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
- if(m){LBS.tok=decodeURIComponent(m[1]);lbSave()}else if(er){LBS.pend=null;lbSave();toast={t:'Sign-in cancelled',l:1.8}}
- if(LBS.tok)lbRefreshMe().then(async()=>{if(!lbIn()||!LBS.pend)return;const p=LBS.pend;LBS.pend=null;lbSave();const res=await lbSubmit(p,p.board);if(res)lbShowRank(res);else openLB('title',p.board)})}
+ if(m){LBS.tok=decodeURIComponent(m[1]);lbSave()}else if(er){LBS.pend=null;lbSave();toast={t:'Sign-in cancelled',l:1.8};try{sessionStorage.removeItem('cs_sx')}catch(e){}}
+ if(LBS.tok)lbRefreshMe().then(async()=>{try{if(lbIn()&&sessionStorage.getItem('cs_sx')){sessionStorage.removeItem('cs_sx');dbTrack('signin_x',{})}}catch(e){}if(!lbIn()||!LBS.pend)return;const p=LBS.pend;LBS.pend=null;lbSave();const res=await lbSubmit(p,p.board);if(res)lbShowRank(res);else openLB('title',p.board)})}
 window.__cs={setHp:f=>{G.p.hp=G.p.mhp*f},cards:()=>cards(),INF,get resetAsk(){return resetAsk},get btns(){return btns},BOSS,spawnBoss:i=>{G.bossI=i+1;spawnBoss(i)},setPhase:n=>{G.phase=n},setT:t=>{G.t=t},get G(){return G},get S(){return S},get scene(){return scene},start:()=>{scene='play';startRun()},auto:(on=true)=>{G.auto=on},god:(on=true)=>{G.god=on},speed:n=>speedMul=n,go:s=>{scene=s},
  pickAuto:()=>{if(G&&G.choice){const c=G.choice;c.t=1;const cs=c.cards;const e=cs.find(q=>q.kind==='e')||cs.find(q=>q.kind==='w'&&q.lv>1)||cs[Math.random()*cs.length|0];choose(e);return true}return false},addGold:n=>{S.gold+=n;save()}};
 })();
-</script><script
-  src="https://cdn.databuddy.cc/databuddy.js"
-  data-client-id="543a7cb0-3979-4000-a209-45af7ac28f26"
-  data-track-web-vitals
-  data-track-errors
-  data-track-outgoing-links
-  crossorigin="anonymous"
-  async
-></script><script src="../analytics.js"></script><script>if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{});</script></body></html>
+</script><script src="../analytics.js"></script><script>if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{});</script></body></html>
