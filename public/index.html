@@ -70,7 +70,8 @@ addEventListener('resize',rs);rs();
 ['touchmove','gesturestart','dblclick','contextmenu'].forEach(e=>document.addEventListener(e,ev=>ev.preventDefault(),{passive:false}));
 // ===== state =====
 let scene='title',G=null,btns=[],t0=performance.now(),clock=0,toast=null,trans=null,pressed=null,speedMul=1,shake=0,uiParts=[];
-const joy={on:false,ox:0,oy:0,x:0,y:0,id:null},keys={};
+const joy={on:false,ox:0,oy:0,x:0,y:0,id:null},keys={},mt={on:false,id:null,wx:0,wy:0};
+const mtSet=(X,Y)=>{if(G&&G.p){mt.wx=G.p.x+(X-W/2)/Z;mt.wy=G.p.y+(Y-H/2)/Z}};
 function go(s,fn){if(trans)return;trans={t:0,to:s,fn};tone(900,.2,'triangle',.04,-600)}
 let M=S.meta,resetAsk=false;
 function resetProgress(){try{localStorage.removeItem(KEY)}catch(e){}S=JSON.parse(JSON.stringify(DEF));M=S.meta;G=null;SC=null;resetAsk=false;scene='title';toast={t:'Progress reset',l:1.6};vib(30)}
@@ -86,9 +87,9 @@ let SC=null;
 // ===== input =====
 cv.addEventListener('pointerdown',e=>{e.preventDefault();au();if(trans)return;const X=e.clientX,Y=e.clientY;
  for(const b of btns.slice().reverse())if(X>b.x&&X<b.x+b.w&&Y>b.y&&Y<b.y+b.h){sfx.click();vib(6);pressed={k:b.k,t:.15};b.f();return}
- if(scene==='play'&&G&&!G.choice&&!G.paused&&!G.over){joy.on=true;joy.id=e.pointerId;joy.ox=X;joy.oy=Y;joy.x=X;joy.y=Y}});
-addEventListener('pointermove',e=>{if(joy.on&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY}});
-const up=e=>{if(e.pointerId===joy.id)joy.on=false};addEventListener('pointerup',up);addEventListener('pointercancel',up);
+ if(scene==='play'&&G&&!G.choice&&!G.paused&&!G.over){if(e.pointerType==='mouse'||e.pointerType==='pen'){mt.on=true;mt.id=e.pointerId;mtSet(X,Y);return}joy.on=true;joy.id=e.pointerId;joy.ox=X;joy.oy=Y;joy.x=X;joy.y=Y}});
+addEventListener('pointermove',e=>{if(joy.on&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY}if(mt.on&&e.pointerId===mt.id)mtSet(e.clientX,e.clientY)});
+const up=e=>{if(e.pointerId===joy.id)joy.on=false;if(e.pointerId===mt.id)mt.on=false};const mtOff=()=>{mt.on=false};addEventListener('blur',mtOff);document.documentElement.addEventListener('mouseleave',mtOff);addEventListener('pointerup',up);addEventListener('pointercancel',up);
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=1;if(e.key==='p'&&G&&scene==='play')G.paused=!G.paused});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=0});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&scene==='play'&&G&&!G.over)G.paused=true});
 addEventListener('blur',()=>{if(scene==='play'&&G&&!G.over&&!G.auto)G.paused=true});
@@ -166,9 +167,10 @@ function update(dt){clock+=dt;if(trans){trans.t+=dt;if(trans.t>=.22&&!trans.done
  for(const q of uiParts){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=200*dt;q.l-=dt}uiParts=uiParts.filter(q=>q.l>0);
  if(scene!=='play'||!G)return;if(G.over){G.over.t+=dt;return}if(G.paused||G.choice){if(G.choice)G.choice.t+=dt;return}
  SC=st();const g=G,p=g.p;g.t+=dt;if(g.banner){g.banner.l-=dt;if(g.banner.l<=0)g.banner=null}g.flash=Math.max(0,g.flash-dt*2);
- if(g.tut){g.tut.t+=dt;if(g.tut.step===0&&(joy.on||g.auto)&&g.tut.t>.5){g.tut.step=1;g.tut.t=0}if(g.tut.step===1&&g.tut.t>4){g.tut.step=2;g.tut.t=0}if(g.tut.step===3&&g.tut.t>0)g.tut.step=4,g.tut.t=0;if(g.tut.step===4&&g.tut.t>4){g.tut=null;S.tut=true;save()}}
+ if(g.tut){g.tut.t+=dt;if(g.tut.step===0&&(joy.on||mt.on||g.auto)&&g.tut.t>.5){g.tut.step=1;g.tut.t=0}if(g.tut.step===1&&g.tut.t>4){g.tut.step=2;g.tut.t=0}if(g.tut.step===3&&g.tut.t>0)g.tut.step=4,g.tut.t=0;if(g.tut.step===4&&g.tut.t>4){g.tut=null;S.tut=true;save()}}
  // move
  let mx=0,my=0;if(joy.on){const dx=joy.x-joy.ox,dy=joy.y-joy.oy,l=Math.hypot(dx,dy);if(l>4*U){const k=Math.min(1,l/(40*U));mx=dx/l*k;my=dy/l*k}if(l>60*U){joy.ox=joy.x-dx/l*60*U;joy.oy=joy.y-dy/l*60*U}}
+ if(mt.on&&!(keys.a||keys.d||keys.w||keys.s||keys.arrowleft||keys.arrowright||keys.arrowup||keys.arrowdown)){const dx=mt.wx-p.x,dy=mt.wy-p.y,l=Math.hypot(dx,dy);if(l>7/Z){const k=Math.min(1,l/Math.max(1e-6,SC.spd*dt));mx=dx/l*k;my=dy/l*k}}
  if(keys.a||keys.arrowleft)mx=-1;if(keys.d||keys.arrowright)mx=1;if(keys.w||keys.arrowup)my=-1;if(keys.s||keys.arrowdown)my=1;
  if(g.auto){const v=autopilot();mx=v[0];my=v[1]}
  p.x+=mx*SC.spd*dt;p.y+=my*SC.spd*dt;if(mx)p.face=mx>0?1:-1;p.walk+=Math.hypot(mx,my)*dt*12;p.inv=Math.max(0,p.inv-dt);p.moving=Math.hypot(mx,my)>.1;
@@ -581,7 +583,7 @@ cv.addEventListener('wheel',e=>{if(scene==='lb'){lb.scroll+=e.deltaY/lbT.k;e.pre
 if(LB_API){const m=location.hash.match(/lb_token=([^&]+)/),er=/lb_error=/.test(location.hash);if(m||er){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
  if(m){LBS.tok=decodeURIComponent(m[1]);lbSave()}else if(er){LBS.pend=null;lbSave();toast={t:'Sign-in cancelled',l:1.8};try{sessionStorage.removeItem('cs_sx')}catch(e){}}
  if(LBS.tok)lbRefreshMe().then(async()=>{try{if(lbIn()&&sessionStorage.getItem('cs_sx')){sessionStorage.removeItem('cs_sx');dbTrack('signin_x',{})}}catch(e){}if(!lbIn()||!LBS.pend)return;const p=LBS.pend;LBS.pend=null;lbSave();const res=await lbSubmit(p,p.board);if(res)lbShowRank(res);else openLB('title',p.board)})}
-window.__cs={setHp:f=>{G.p.hp=G.p.mhp*f},cards:()=>cards(),INF,get resetAsk(){return resetAsk},get btns(){return btns},BOSS,spawnBoss:i=>{G.bossI=i+1;spawnBoss(i)},setPhase:n=>{G.phase=n},setT:t=>{G.t=t},get G(){return G},get S(){return S},get scene(){return scene},start:()=>{scene='play';startRun()},auto:(on=true)=>{G.auto=on},god:(on=true)=>{G.god=on},speed:n=>speedMul=n,go:s=>{scene=s},
+window.__cs={get joy(){return joy},get mt(){return mt},setHp:f=>{G.p.hp=G.p.mhp*f},cards:()=>cards(),INF,get resetAsk(){return resetAsk},get btns(){return btns},BOSS,spawnBoss:i=>{G.bossI=i+1;spawnBoss(i)},setPhase:n=>{G.phase=n},setT:t=>{G.t=t},get G(){return G},get S(){return S},get scene(){return scene},start:()=>{scene='play';startRun()},auto:(on=true)=>{G.auto=on},god:(on=true)=>{G.god=on},speed:n=>speedMul=n,go:s=>{scene=s},
  pickAuto:()=>{if(G&&G.choice){const c=G.choice;c.t=1;const cs=c.cards;const e=cs.find(q=>q.kind==='e')||cs.find(q=>q.kind==='w'&&q.lv>1)||cs[Math.random()*cs.length|0];choose(e);return true}return false},addGold:n=>{S.gold+=n;save()}};
 })();
 </script><script src="../analytics.js"></script><script>if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{});</script></body></html>
