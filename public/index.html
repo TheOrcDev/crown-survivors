@@ -88,9 +88,9 @@ let SC=null;
 cv.addEventListener('pointerdown',e=>{e.preventDefault();au();if(trans)return;const X=e.clientX,Y=e.clientY;
  for(const b of btns.slice().reverse())if(X>b.x&&X<b.x+b.w&&Y>b.y&&Y<b.y+b.h){sfx.click();vib(6);pressed={k:b.k,t:.15};b.f();return}
  if(scene==='play'&&G&&!G.choice&&!G.paused&&!G.over){if(e.pointerType==='mouse'||e.pointerType==='pen'){mt.on=true;mt.id=e.pointerId;mtSet(X,Y);return}joy.on=true;joy.id=e.pointerId;joy.ox=X;joy.oy=Y;joy.x=X;joy.y=Y}});
-addEventListener('pointermove',e=>{if(joy.on&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY}if(mt.on&&e.pointerId===mt.id)mtSet(e.clientX,e.clientY)});
+addEventListener('pointermove',e=>{if(joy.on&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY}if(mt.on&&e.pointerId===mt.id){if(e.buttons===0)mt.on=false;else mtSet(e.clientX,e.clientY)}});
 const up=e=>{if(e.pointerId===joy.id)joy.on=false;if(e.pointerId===mt.id)mt.on=false};const mtOff=()=>{mt.on=false};addEventListener('blur',mtOff);document.documentElement.addEventListener('mouseleave',mtOff);addEventListener('pointerup',up);addEventListener('pointercancel',up);
-addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=1;if(e.key==='p'&&G&&scene==='play')G.paused=!G.paused});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=0});
+const keysOff=()=>{for(const k in keys)keys[k]=0};addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey){keysOff();return}keys[e.key.toLowerCase()]=1;if(e.key==='p'&&G&&scene==='play')G.paused=!G.paused});addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k]=0;if(k==='meta'||k==='os'||k==='control'||k==='alt')keysOff()});addEventListener('blur',keysOff);document.addEventListener('visibilitychange',()=>{if(document.hidden)keysOff()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&scene==='play'&&G&&!G.over)G.paused=true});
 addEventListener('blur',()=>{if(scene==='play'&&G&&!G.over&&!G.auto)G.paused=true});
 // ===== helpers =====
