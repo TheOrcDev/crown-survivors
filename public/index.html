@@ -144,7 +144,7 @@ function cardInfo(c){if(c.kind==='w'){const W0=WP[c.k];return{n:W0.n,d:c.lv===1?
 function wDesc(k,l){return({bolt:['','','+1 bolt','+dmg, faster','+1 bolt','+1 bolt, pierce'],orb:['','','+1 coin','+dmg','+1 coin','+2 coins'],rain:['','','+1 pool','+size & dmg','+1 pool','+1 pool'],aura:['','','+radius','+dmg','+radius','+dmg & knockback'],boom:['','','+1 crown','+dmg','+1 crown','+1 crown, range'],zap:['','','+1 strike','+dmg','+1 strike','+2 strikes']})[k][l]}
 // ===== damage =====
 function hurtEnemy(e,dmg,kb=0,ax=0,ay=0){if(e.dead)return;let crit=Math.random()<SC.crit;dmg*=SC.dmg*(crit?2:1)*rnd(.9,1.1);e.hp-=dmg;e.flash=.1;G.dmgDealt+=dmg;
- if(kb&&!e.boss){const l=Math.hypot(ax,ay)||1;e.kx+=ax/l*kb;e.ky+=ay/l*kb}if(ax||ay){e.hx=ax;e.hy=ay}dnum(e.x,e.y-e.r,dmg,crit);
+ if(kb&&!e.boss){const l=Math.hypot(ax,ay)||1;e.kx+=ax/l*kb;e.ky+=ay/l*kb}if(ax||ay){e.hx=ax;e.hy=ay}else e.hx=e.hy=null;dnum(e.x,e.y-e.r,dmg,crit);
  if(S.gore){crit?sfx.chop():sfx.slash();if(e.hp>0&&lim('bh',30)){const d=goreDir(e);spray(e.x,e.y,d[0],d[1],2+(Math.random()*2|0),gMat(e),110,.5,0)}}else sfx.hit();if(e.hp<=0)killEnemy(e)}
 function killEnemy(e){e.dead=1;G.kills++;if(S.gore){sfx.squelch();goreKill(e)}else sfx.kill();fx(e.x,e.y,e.boss?60:e.elite?20:7,e.boss?'#ffd23f':ETYPE[e.type]?ETYPE[e.type].c:'#fff',e.boss?200:80,.5,e.boss?6:3);
  const v=e.xp;G.gems.push({x:e.x,y:e.y,v,k:v>=15?'big':v>=3?'mid':'xp'});
@@ -162,12 +162,12 @@ function endRun(win){if(G.over)return;const gold=Math.round(G.gold+G.kills/30+(w
 // Floor blood is baked into GT×GT world-unit canvases (1 canvas px = 1 world unit) so it stays all run for ~free; the tile farthest from the player is evicted past GMAX.
 const GT=256,GMAX=40;
 const gMat=e=>e.boss?BMAT[e.bi]:GMAT[e.type]||'red',goreDir=e=>e.hx!=null?[e.hx,e.hy]:[e.x-G.p.x,e.y-G.p.y];
-function gTile(tx,ty){const B=G.blood.t,k=tx+','+ty;let t=B.get(k);if(!t){if(B.size>=GMAX){let far=null,fd=-1;for(const [kk,o] of B){const d=((o.tx+.5)*GT-G.p.x)**2+((o.ty+.5)*GT-G.p.y)**2;if(d>fd){fd=d;far=kk}}B.delete(far)}
+function gTile(tx,ty,B=G.blood.t){const k=tx+','+ty;let t=B.get(k);if(!t){if(B.size>=GMAX){let far=null,fd=-1;for(const [kk,o] of B){const d=((o.tx+.5)*GT-G.p.x)**2+((o.ty+.5)*GT-G.p.y)**2;if(d>fd){fd=d;far=kk}}B.delete(far)}
  const c=document.createElement('canvas');c.width=c.height=GT;t={c,x:c.getContext('2d'),tx,ty};B.set(k,t)}return t}
 // disc as rows of 2-unit pixels, pushed as [x,y,w,h,colour]
 function gDisc(R,cx,cy,r,c){for(let y=-r;y<=r;y+=2){const hw=Math.sqrt(Math.max(0,r*r-y*y)),x0=Math.round((cx-hw)/2)*2;R.push([x0,Math.round((cy+y)/2)*2,Math.max(2,Math.round((cx+hw)/2)*2-x0),2,c])}}
-function gStamp(R,a){if(!R.length)return;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of R){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]+q[2]);y1=Math.max(y1,q[1]+q[3])}
- for(let tx=Math.floor(x0/GT);tx<=Math.floor((x1-1)/GT);tx++)for(let ty=Math.floor(y0/GT);ty<=Math.floor((y1-1)/GT);ty++){const c=gTile(tx,ty).x;c.setTransform(1,0,0,1,-tx*GT,-ty*GT);c.globalAlpha=a;for(const q of R){c.fillStyle=q[4];c.fillRect(q[0],q[1],q[2],q[3])}}}
+function gStamp(R,a,B=G.blood.t){if(!R.length)return;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of R){x0=Math.min(x0,q[0]);y0=Math.min(y0,q[1]);x1=Math.max(x1,q[0]+q[2]);y1=Math.max(y1,q[1]+q[3])}
+ for(let tx=Math.floor(x0/GT);tx<=Math.floor((x1-1)/GT);tx++)for(let ty=Math.floor(y0/GT);ty<=Math.floor((y1-1)/GT);ty++){const c=gTile(tx,ty,B).x;c.setTransform(1,0,0,1,-tx*GT,-ty*GT);c.globalAlpha=a;for(const q of R){c.fillStyle=q[4];c.fillRect(q[0],q[1],q[2],q[3])}}}
 function chip(R,cx,cy,c){const h=Math.random()<.5,w=h?4:2,hh=h?2:4,X=Math.round(cx),Y=Math.round(cy);R.push([X-1,Y-1,w+2,hh+2,pal.ink],[X,Y,w,hh,c])}
 // pool + streaks thrown along the hit direction (dx,dy); 0,0 = all around
 function splat(cx,cy,r,dx,dy,mat){const m=GORE[mat],c=m.c,R=[],l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,a0=Math.atan2(uy,ux),omni=!dx&&!dy;
@@ -182,14 +182,14 @@ function spray(x0,y0,dx,dy,n,mat,spd,cone,st){const m=GORE[mat],a0=Math.atan2(dy
  G.drops.push({x:x0+rnd(-3,3),y:y0+rnd(-3,3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,z:rnd(3,9),vz:rnd(40,130),c:m.c[Math.random()*m.c.length|0],s:rnd(1.5,3),m:mat,st})}}
 function gibs(e,n){const c=e.boss?BOSS[e.bi].c:ETYPE[e.type].c;for(let i=0;i<n&&G.drops.length<400;i++){const a=Math.random()*6.28,v=rnd(50,e.boss?220:150);
  G.drops.push({x:e.x,y:e.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,z:rnd(4,12),vz:rnd(90,200),c,s:rnd(3,5),m:gMat(e),st:1,gib:1})}}
-function gLand(d){const m=GORE[d.m],R=[];if(d.gib){if(!m.chip){const D=[];gDisc(D,d.x,d.y,rnd(2.5,4),m.c[0]);gStamp(D,m.a)}const s=Math.round(d.s),X=Math.round(d.x-s/2),Y=Math.round(d.y-s/2);R.push([X-1,Y-1,s+2,s+2,pal.ink],[X,Y,s,s,d.c],[X,Y,Math.max(1,s-2),1,'rgba(255,255,255,.3)']);return gStamp(R,1)}
- if(m.chip){chip(R,d.x,d.y,d.c);return gStamp(R,1)}
- gDisc(R,d.x,d.y,d.s*rnd(.5,.9),d.c);const v=Math.hypot(d.vx,d.vy);if(v>50)gDisc(R,d.x+d.vx/v*3,d.y+d.vy/v*3,d.s*.4,d.c);gStamp(R,m.a)}
+function gLand(d){const m=GORE[d.m],R=[],B=d.old?G.blood.old:G.blood.t;if(!B)return;if(d.gib){if(!m.chip){const D=[];gDisc(D,d.x,d.y,rnd(2.5,4),m.c[0]);gStamp(D,m.a,B)}const s=Math.round(d.s),X=Math.round(d.x-s/2),Y=Math.round(d.y-s/2);R.push([X-1,Y-1,s+2,s+2,pal.ink],[X,Y,s,s,d.c],[X,Y,Math.max(1,s-2),1,'rgba(255,255,255,.3)']);return gStamp(R,1,B)}
+ if(m.chip){chip(R,d.x,d.y,d.c);return gStamp(R,1,B)}
+ gDisc(R,d.x,d.y,d.s*rnd(.5,.9),d.c);const v=Math.hypot(d.vx,d.vy);if(v>50)gDisc(R,d.x+d.vx/v*3,d.y+d.vy/v*3,d.s*.4,d.c);gStamp(R,m.a,B)}
 function goreKill(e){const d=goreDir(e),mat=gMat(e),k=e.boss?1.7:e.elite?1.6:1;splat(e.x,e.y+e.r*.3,e.r*1.4*k,d[0],d[1],mat);spray(e.x,e.y,d[0],d[1],e.boss?40:e.elite?14:GORE[mat].chip?5:10,mat,e.boss?260:170,.6,1);if(e.boss||e.elite)gibs(e,e.boss?10:4)}
 function goreBurst(e){const mat=gMat(e);splat(e.x,e.y,e.r*2,0,0,mat);spray(e.x,e.y,0,0,30,mat,240,Math.PI,1);sfx.splatter()}
 function goreHurt(p){spray(p.x,p.y,0,0,4,'red',90,Math.PI,1);const R=[];for(let i=0;i<3;i++)gDisc(R,p.x+rnd(-5,5),p.y+7+rnd(-2,3),rnd(1.5,3),GORE.red.c[i]);gStamp(R,GORE.red.a)}
-// new phase = new floor: old blood fades out over 1s while fresh kills paint a clean layer
-function bloodWash(){const b=G.blood;b.old=b.t;b.t=new Map();b.fade=1}
+// new phase = new floor: old blood and airborne drops fade over 1s while fresh kills paint a clean layer
+function bloodWash(){const b=G.blood;b.old=b.t;b.t=new Map();b.fade=1;for(const d of G.drops)d.old=1}
 function bloodClear(){if(G){G.blood={t:new Map(),old:null,fade:0};G.drops=[]}}
 function updGore(dt){const g=G,b=g.blood;if(b.fade>0){b.fade-=dt;if(b.fade<=0)b.old=null}
  for(const d of g.drops){d.x+=d.vx*dt;d.y+=d.vy*dt;d.vx*=1-dt*1.5;d.vy*=1-dt*1.5;d.z+=d.vz*dt;d.vz-=480*dt;if(d.z<=0){d.l=1;if(d.st&&S.gore)gLand(d)}}g.drops=g.drops.filter(d=>!d.l)}
@@ -403,7 +403,7 @@ function offInd(p,hw,hh){const out=e=>Math.abs(e.x-p.x)>hw+14||Math.abs(e.y-p.y)
 function drawBlood(p,vw,vh){const b=G.blood;if(!S.gore)return;x.save();x.imageSmoothingEnabled=false;
  const f=(B,a)=>{x.globalAlpha=a;for(let tx=Math.floor((p.x-vw)/GT);tx<=Math.floor((p.x+vw)/GT);tx++)for(let ty=Math.floor((p.y-vh)/GT);ty<=Math.floor((p.y+vh)/GT);ty++){const t=B.get(tx+','+ty);if(t)x.drawImage(t.c,tx*GT,ty*GT)}};
  if(b.old)f(b.old,Math.max(0,b.fade));f(b.t,1);x.restore()}
-function drawDrops(){for(const d of G.drops){x.globalAlpha=GORE[d.m].a;const s=d.s,X=d.x-s/2,Y=d.y-d.z-s/2;if(d.gib){x.fillStyle=pal.ink;x.fillRect(X-1,Y-1,s+2,s+2)}x.fillStyle=d.c;x.fillRect(X,Y,s,s)}x.globalAlpha=1}
+function drawDrops(){for(const d of G.drops){x.globalAlpha=GORE[d.m].a*(d.old?Math.max(0,G.blood.fade):1);const s=d.s,X=d.x-s/2,Y=d.y-d.z-s/2;if(d.gib){x.fillStyle=pal.ink;x.fillRect(X-1,Y-1,s+2,s+2)}x.fillStyle=d.c;x.fillRect(X,Y,s,s)}x.globalAlpha=1}
 function drawWorld(){const g=G,p=g.p,ph=PHASE[Math.min(PHASE.length-1,g.phase)];x.save();const sx=(Math.random()-.5)*shake*U,sy=(Math.random()-.5)*shake*U;x.translate(W/2+sx,H/2+sy);x.scale(Z,Z);x.translate(-p.x,-p.y);
  const vw=W/Z/2+40,vh=H/Z/2+40,T=48;x.fillStyle=ph.g;x.fillRect(p.x-vw,p.y-vh,vw*2,vh*2);
  for(let tx=Math.floor((p.x-vw)/T);tx<=(p.x+vw)/T;tx++)for(let ty=Math.floor((p.y-vh)/T);ty<=(p.y+vh)/T;ty++){const h=((tx*73856093)^(ty*19349663))>>>0;if((tx+ty)&1){x.fillStyle=ph.g2;x.fillRect(tx*T,ty*T,T,T)}
