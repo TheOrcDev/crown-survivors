@@ -1026,14 +1026,17 @@ const _drawTitle=drawTitle;drawTitle=function(){_drawTitle();if(!LB_API)return;
 // ===== events archive ===== every event that has started, newest first: dates, your Pumpkin Crowns, your ranks, read-only boards
 const evDates=e=>{const f=t=>new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'Africa/Johannesburg'}).toUpperCase();return f(Date.parse(e.startAt))+' – '+f(Date.parse(e.endAt)-1)+' '+e.endAt.slice(0,4)};
 function openEvents(){go('events');if(lbIn())for(const e of evPast())for(const [b] of EVB)api(lbP(e.id)+'/me/rank?board='+b).then(m=>{if(m&&m.ok&&m.j){LBS.ranks[lbK(b,e.id)]=m.j.rank||null;lbSave()}})}
-function drawEvents(){menuBg();lbBegin();pix('EVENTS',195,40,22,pal.gold,2,'#e0a526');if(lbIn())lbChip(102,62);
- rr(13,106,364,664,16,'rgba(0,0,0,.35)');rr(13,100,364,664,16,'#f3e2b8',LINK,4);rr(21,108,348,648,10,null,'#c9a66b',2);const L=evPast();
- if(!L.length)txt('No events yet. Check back soon!',195,240,12,'#8b6a3a','center',false);
- L.slice(0,3).forEach((e,i)=>{const y=122+i*206,live=evState(e)==='live';rr(33,y,324,190,12,'#e9d3a0',LINK,2);pix(e.name,195,y+30,16,'#e07820',0,'#c05812');
-  rr(286,y+10,62,20,6,live?'#d0661a':'#8b6a3a',LINK,2);txt(live?'LIVE':'ENDED',317,y+21,8,pal.paper,'center',false);txt(evDates(e),195,y+56,11,'#5a4030','center',false);
-  if(e.theme==='halloween'){pcrown(156,y+98,2.2);txt('Pumpkin Crowns',178,y+88,10,'#8b6a3a','left',false);txt(''+(S.pumpkinCrowns|0),178,y+105,18,LINK,'left',false)}
-  const rk=EVB.map(([b])=>LBS.ranks[lbK(b,e.id)]?b.toUpperCase()+' #'+LBS.ranks[lbK(b,e.id)]:null).filter(Boolean);
-  txt(lbIn()?(rk.length?rk.join('  ·  '):'No ranked runs yet'):'Sign in to see your rankings',195,y+132,10,'#5a4030','center',false);
+function drawEvents(){menuBg();x.fillStyle='rgba(30,20,10,.6)';x.fillRect(0,0,W,H);lbBegin();pix('EVENTS',195,40,22,pal.gold,2,'#e0a526');if(lbIn())lbChip(102,62);
+ // the panel hugs up to three cards: name + badge, dates | Pumpkin Crowns, your rank per board | boards button
+ const L=evPast().slice(0,3),ph=L.length?L.length*204+30:120;
+ rr(13,106,364,ph,16,'rgba(0,0,0,.35)');rr(13,100,364,ph,16,'#f3e2b8',LINK,4);rr(21,108,348,ph-16,10,null,'#c9a66b',2);
+ if(!L.length)txt('No events yet. Check back soon!',195,160,12,'#8b6a3a','center',false);
+ L.forEach((e,i)=>{const y=122+i*204,live=evState(e)==='live',hw=e.theme==='halloween',n=e.name.length*6-1,nz=Math.min(16,5*218/(n*U)),c0=hw?208:120,c1=hw?341:270;
+  rr(33,y,324,190,12,'#e9d3a0',LINK,2);pix(e.name,49+n*nz*U/10,y+26,nz,'#e07820',0,'#c05812');rr(279,y+16,62,20,6,live?'#d0661a':'#8b6a3a',LINK,2);txt(live?'LIVE':'ENDED',310,y+27,8,pal.paper,'center',false);
+  txt(evDates(e),49,y+52,10,'#5a4030','left',false);x.fillStyle='#c9a66b';x.fillRect(47,y+68,296,2);
+  if(hw){x.fillRect(194,y+80,2,54);pcrown(72,y+112,2);txt('PUMPKIN CROWNS',96,y+94,9,'#8b6a3a','left',false);txt(fitTxt(fmtN(S.pumpkinCrowns|0),92,18),96,y+116,18,LINK,'left',false)}
+  if(!lbIn()){txt('Sign in to see',(c0+c1)/2,y+98,10,'#8b6a3a','center',false);txt('your rankings',(c0+c1)/2,y+114,10,'#8b6a3a','center',false)}
+  else EVB.forEach(([b],j)=>{const r=LBS.ranks[lbK(b,e.id)],ry=y+87+j*20;txt(b.toUpperCase(),c0,ry,10,'#8b6a3a','left',false);txt(r?fitTxt('#'+fmtN(r),c1-c0-58,11):'—',c1,ry,11,r?LINK:'#a8875a','right',false)});
   button(live?'VIEW BOARDS':'VIEW RANKINGS',105,y+146,180,34,()=>openLB('events',null,e.id),'#6a5acd',13)});
  if(L.length<3)txt('New events appear here when they start.',195,122+L.length*206+24,11,'#8b6a3a','center',false);
  button('BACK',135,782,UI.back[0],UI.back[1],()=>go('title'),'#8b5a2b',UI.back[2]);lbEnd()}
